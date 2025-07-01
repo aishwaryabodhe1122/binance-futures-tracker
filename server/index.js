@@ -4,6 +4,11 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const axios = require('axios');
 
+const Parser    = require("rss-parser");
+const Sentiment = require("sentiment");
+const parser    = new Parser();
+const sentiment = new Sentiment();
+
 const app = express();
 const server = http.createServer(app);
 
@@ -64,6 +69,44 @@ const fetchAndBroadcastPrices = async () => {
 // Fire once immediately, then every 5s
 fetchAndBroadcastPrices();
 setInterval(fetchAndBroadcastPrices, 5000);
+
+app.get("/news/:symbol", async (req, res) => {
+  const symbol = req.params.symbol.replace(/USDT$/, "");
+  console.log(`→ Fetching news & sentiment for ${symbol}`);
+
+  try {
+    // 1) Fetch RSS feed
+    const feed = await parser.parseURL("https://cryptonews.com/news/feed");
+
+    // 2) Filter & pick top 5 headlines mentioning the symbol
+    const articles = feed.items
+      .filter(item =>
+        item.title.toUpperCase().includes(symbol.toUpperCase())
+      )
+      .slice(0, 5)
+      .map(item => item.title);
+
+    console.log(`Found ${articles.length} articles:`, articles);
+
+    // 3) Compute sentiment score for each headline
+    const scores = articles.map(title => sentiment.analyze(title).score);
+    console.log("Sentiment scores:", scores);
+
+    // 4) Aggregate to a simple prediction
+    const avg = scores.reduce((sum, s) => sum + s, 0) / (scores.length || 1);
+    let prediction;
+    if (avg > 0.5) prediction = "Predicted trend: likely to rise 📈";
+    else if (avg < -0.5) prediction = "Predicted trend: likely to fall 📉";
+    else prediction = "Predicted trend: likely to stay stable ➖";
+
+    // 5) Return both headlines and your “AI” prediction
+    return res.json({ articles, prediction });
+
+  } catch (err) {
+    console.error("❌ News/sentiment error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 // Start server
 const PORT = 4000;
