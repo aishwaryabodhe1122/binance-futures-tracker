@@ -20,7 +20,7 @@ function App() {
   useEffect(() => {
     if (!selected) return;
     setLoadingDetails(true);
-    fetch(`http://localhost:4000/news/${selected}`)
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/news/${selected}`)
       .then((res) => res.json())
       .then((data) => {
         setDetails({
