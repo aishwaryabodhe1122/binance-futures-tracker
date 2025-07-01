@@ -19,7 +19,7 @@ const io = new Server(server, {
     origin: [
   'http://localhost:3000',
   'https://coruscating-elf-c2460f.netlify.app'
-];
+],
     methods: ['GET','POST']
   }
 });
