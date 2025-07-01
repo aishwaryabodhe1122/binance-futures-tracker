@@ -1,134 +1,175 @@
 import React, { useEffect, useState } from "react";
 import socket from "./socket";
+import { FaArrowUp, FaArrowDown, FaMinus } from "react-icons/fa";
 
 function App() {
   const [coins, setCoins] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [details, setDetails] = useState({ articles: [], prediction: "" });
+  const [details, setDetails] = useState({
+    articles: [],
+    prediction: "",
+    icon: "",
+  });
   const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
-    socket.on("priceUpdate", (data) => {
-      console.log("Received coins:", data);
-      setCoins(data);
-    });
-
-    return () => {
-      socket.off("priceUpdate");
-    };
+    socket.on("priceUpdate", (data) => setCoins(data));
+    return () => socket.off("priceUpdate");
   }, []);
 
   useEffect(() => {
     if (!selected) return;
-
-    console.log("🌐 Fetching details for", selected);
     setLoadingDetails(true);
-
     fetch(`http://localhost:4000/news/${selected}`)
       .then((res) => res.json())
       .then((data) => {
-        console.log("📬 Details received:", data);
         setDetails({
           articles: Array.isArray(data.articles) ? data.articles : [],
           prediction:
             typeof data.prediction === "string" ? data.prediction : "",
+          icon: data.icon || "",
         });
       })
-      .catch((err) => {
-        console.error("❌ Fetch error:", err);
-        setDetails({ articles: [], prediction: "Error loading details." });
-      })
+      .catch(() =>
+        setDetails({
+          articles: [],
+          prediction: "Error loading details.",
+          icon: "",
+        })
+      )
       .finally(() => setLoadingDetails(false));
   }, [selected]);
 
-  return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Binance Futures Tracker</h1>
+  const styles = {
+    app: {
+      fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
+      backgroundColor: "#121212",
+      color: "#E0E0E0",
+      minHeight: "100vh",
+      padding: "2rem",
+    },
+    header: {
+      fontSize: "2rem",
+      fontWeight: "bold",
+      marginBottom: "1.5rem",
+      color: "#FFD700",
+      display: "flex",
+      justifyContent: "center",
+    },
+    table: {
+      width: "100%",
+      borderCollapse: "collapse",
+    },
+    th: {
+      textAlign: "left",
+      padding: "0.75rem",
+      backgroundColor: "#1F1F1F",
+      borderBottom: "2px solid #333",
+    },
+    td: {
+      padding: "0.75rem",
+      textAlign: "right",
+      borderBottom: "1px solid #2A2A2A",
+    },
+    row: {
+      cursor: "pointer",
+    },
+    modalOverlay: {
+      position: "fixed",
+      inset: 0,
+      backgroundColor: "rgba(0,0,0,0.7)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+    },
+    modal: {
+      backgroundColor: "#1E1E1E",
+      padding: "2rem",
+      borderRadius: "8px",
+      maxWidth: "600px",
+      width: "90%",
+      color: "#E0E0E0",
+      position: "relative",
+    },
+    closeBtn: {
+      position: "absolute",
+      top: "1rem",
+      right: "1rem",
+      background: "transparent",
+      border: "none",
+      fontSize: "1.2rem",
+      color: "#E0E0E0",
+      cursor: "pointer",
+    },
+  };
 
-      <table className="min-w-full border-collapse">
+  return (
+    <div style={styles.app}>
+      <h1 style={styles.header}>Binance Futures Tracker</h1>
+
+      <table style={styles.table}>
         <thead>
-          <tr className="border-b">
-            <th className="text-left p-2">Symbol</th>
-            <th className="text-right p-2">Price (USD)</th>
-            <th className="text-right p-2">Δ since last</th>
-            <th className="text-right p-2">24h %</th>
+          <tr>
+            <th style={styles.th}>Symbol</th>
+            <th style={{ ...styles.th, textAlign: 'right' }}>Price (USD)</th>
+            <th style={{ ...styles.th, textAlign: 'right' }}>Δ since last</th>
+            <th style={{ ...styles.th, textAlign: "right" }}>24h %</th>
           </tr>
         </thead>
         <tbody>
-          {coins.map((coin) => {
-            const deltaColor =
-              coin.delta >= 0 ? "text-green-600" : "text-red-600";
-            const pctColor =
-              coin.percentChange >= 0 ? "text-green-600" : "text-red-600";
-
-            return (
-              <tr
-                key={coin.symbol}
-                className="hover:bg-gray-100 cursor-pointer"
-                onClick={() => setSelected(coin.symbol)}
+          {coins.map((coin, idx) => (
+            <tr
+              key={coin.symbol}
+              style={styles.row}
+              onClick={() => setSelected(coin.symbol)}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#1A1A1A")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              <td style={{ ...styles.td, textAlign: "left" }}>{coin.symbol}</td>
+              <td style={styles.td}>{coin.price.toFixed(2)}</td>
+              <td
+                style={{
+                  ...styles.td,
+                  color: coin.delta >= 0 ? "#4CAF50" : "#F44336",
+                }}
               >
-                <td className="p-2">{coin.symbol}</td>
-                <td className="p-2 text-right">{coin.price.toFixed(2)}</td>
-                <td className={`p-2 text-right ${deltaColor}`}>
-                  {coin.delta >= 0 ? "+" : ""}
-                  {coin.delta.toFixed(2)}
-                </td>
-                <td className={`p-2 text-right ${pctColor}`}>
-                  {coin.percentChange >= 0 ? "+" : ""}
-                  {coin.percentChange.toFixed(2)}%
-                </td>
-              </tr>
-            );
-          })}
+                {coin.delta >= 0 ? "+" : ""}
+                {coin.delta.toFixed(2)}
+              </td>
+              <td
+                style={{
+                  ...styles.td,
+                  color: coin.percentChange >= 0 ? "#4CAF50" : "#F44336",
+                }}
+              >
+                {coin.percentChange >= 0 ? "+" : ""}
+                {coin.percentChange.toFixed(2)}%
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
-      {selected && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "1.5rem",
-              borderRadius: "8px",
-              maxWidth: "500px",
-              width: "100%",
-              position: "relative",
-            }}
-          >
-            <button
-              onClick={() => setSelected(null)}
-              style={{
-                position: "absolute",
-                top: "0.5rem",
-                right: "0.5rem",
-                background: "transparent",
-                border: "none",
-                fontSize: "1.2rem",
-                cursor: "pointer",
-              }}
-            >
-              ✕
-            </button>
 
-            <h2 style={{ marginBottom: "1rem" }}>{selected} Details</h2>
+      {selected && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <button style={styles.closeBtn} onClick={() => setSelected(null)}>
+              ×
+            </button>
+            <h2>{selected} Details</h2>
 
             {loadingDetails ? (
               <p>Loading…</p>
             ) : (
               <>
                 <h3>News Headlines:</h3>
-                {Array.isArray(details.articles) &&
-                details.articles.length > 0 ? (
-                  <ul style={{ paddingLeft: "1.2rem" }}>
+                {details.articles.length > 0 ? (
+                  <ul>
                     {details.articles.map((h, i) => (
                       <li key={i}>{h}</li>
                     ))}
@@ -137,8 +178,21 @@ function App() {
                   <p>No recent headlines found.</p>
                 )}
 
-                <h3 style={{ marginTop: "1rem" }}>24h Prediction:</h3>
-                <p>{details.prediction}</p>
+                <h3>24h Prediction:</h3>
+                <p
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  {details.icon === "arrow-up" && <FaArrowUp color="#4CAF50" />}
+                  {details.icon === "arrow-down" && (
+                    <FaArrowDown color="#F44336" />
+                  )}
+                  {details.icon === "minus" && <FaMinus color="#FFC107" />}
+                  {details.prediction}
+                </p>
               </>
             )}
           </div>

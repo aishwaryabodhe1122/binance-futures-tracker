@@ -1,70 +1,79 @@
-# Getting Started with Create React App
+# Binance Futures Tracker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
 
-## Available Scripts
+Binance Futures Tracker is a full-stack real-time web application that displays live prices for the top 50 futures contracts on Binance. It provides:
 
-In the project directory, you can run:
+* **Real-time price updates** via a server-side WebSocket feed (no client polling).
+* **Price delta** since last update and **24-hour percentage change**, color-coded for clarity.
+* **News headlines** fetched dynamically from Google News RSS for each asset.
+* **Local sentiment analysis** on recent headlines to predict whether the price is likely to **rise**, **fall**, or **stay stable** over the next 24 hours.
 
-### `npm start`
+Built with React on the frontend and Node.js + Express + `socket.io` on the backend.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Features
 
-### `npm test`
+1. **Live Price Table**
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+   * Top 50 Binance futures sorted by quote volume.
+   * Columns: Symbol, Price (USD), Δ since last, 24h %.
+   * Color-coded: green for positive, red for negative changes.
 
-### `npm run build`
+2. **News & Prediction Modal**
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+   * Click any row to open a modal.
+   * Displays the 5 most recent news headlines mentioning that asset from Google News RSS.
+   * Runs local sentiment analysis on headlines to compute a one-line prediction (rise/fall/stable). Icons indicate trend.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Local Setup
 
-### `npm run eject`
+### Prerequisites
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+* **Node.js** v14 or newer
+* **npm** (comes with Node.js)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 1. Clone the Repository
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+git clone <your-repo-url>
+cd binance-futures-tracker
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 2. Install Server Dependencies
 
-## Learn More
+```bash
+cd server
+npm install express cors socket.io ws rss-parser sentiment
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 3. Install Client Dependencies
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+cd ../client
+npm install react react-dom react-icons socket.io-client
+```
 
-### Code Splitting
+### 4. Run the Server
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+cd ../server
+npm start   # or nodemon index.js if you have nodemon installed
+```
 
-### Analyzing the Bundle Size
+The server will start on **[http://localhost:4000](http://localhost:4000)** and connect to Binance’s WebSocket feed.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### 5. Run the Client
 
-### Making a Progressive Web App
+```bash
+cd ../client
+npm start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+The React app will open in your default browser at **[http://localhost:3000](http://localhost:3000)**.
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
